@@ -1,0 +1,13 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["__APPLE_TEAM_ID__.com.astonima.app"],
+        "components": [
+          { "/": "/i", "comment": "INVITE-HTTPS-01 friend invite (token in #fragment)" },
+          { "/": "/i/", "comment": "INVITE-HTTPS-01 friend invite, trailing slash" }
+        ]
+      }
+    ]
+  }
+}
