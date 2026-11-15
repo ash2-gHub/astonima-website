@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Einladung zu Astonima</title>
+  <!-- INVITE-HTTPS-01: invite landing page. The invite token lives only in the #fragment and never leaves this page. -->
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self'; base-uri 'none'; form-action 'none'">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Astonima">
+  <meta property="og:title" content="Einladung zu Astonima">
+  <meta property="og:description" content="One Face. Many sides of you.">
+  <meta property="og:image" content="https://www.astonima.app/og-image.jpg">
+  <style>
+    :root { --bg:#0b0f19; --card:#111827; --text:#f3f4f6; --muted:#9ca3af; --accent:#3b82f6; --border:#1f2937; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--text); line-height:1.6; min-height:100vh; display:flex; align-items:center; }
+    .wrap { width:100%; max-width:520px; margin:0 auto; padding:2rem 1.25rem; }
+    h1 { font-size:1.9rem; line-height:1.2; font-weight:800; letter-spacing:-0.02em; margin-bottom:.5rem; }
+    p { color:var(--muted); }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:1.25rem; margin-top:1.25rem; }
+    .step { font-weight:600; color:var(--text); margin-bottom:.5rem; }
+    .btn { display:block; width:100%; text-align:center; padding:.9rem 1rem; border-radius:10px; font-weight:700; font-size:1rem; text-decoration:none; border:0; cursor:pointer; margin-top:.75rem; }
+    .primary { background:var(--accent); color:#fff; }
+    .secondary { background:transparent; color:var(--accent); border:1px solid var(--accent); }
+    .note { font-size:.85rem; margin-top:.75rem; }
+    .manual { width:100%; margin-top:.75rem; padding:.6rem; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:.8rem; }
+    [hidden] { display:none !important; }
+    footer { margin-top:2rem; font-size:.8rem; color:var(--muted); text-align:center; }
+    footer a { color:var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1 id="title">Du wurdest zu Astonima eingeladen</h1>
+    <p id="lead">One Face. Many sides of you.</p>
+
+    <div class="card">
+      <div class="step" id="s1">1. Astonima installieren</div>
+      <a class="btn primary" id="install" href="#" rel="noopener">App installieren</a>
+    </div>
+
+    <div class="card" id="openCard">
+      <div class="step" id="s2">2. Danach die Einladung öffnen</div>
+      <a class="btn primary" id="open" href="#">Einladung in Astonima öffnen</a>
+      <button class="btn secondary" id="copy" type="button">Einladung kopieren</button>
+      <p class="note" id="copyNote">Falls sich die App nicht öffnet: Einladung kopieren, Astonima öffnen, unter „Freunde“ auf „Einladung einfügen“ tippen.</p>
+      <p class="note" id="copied" hidden>Kopiert.</p>
+      <p class="note" id="copyFail" hidden>Kopieren nicht möglich. Bitte den Text unten markieren und selbst kopieren.</p>
+      <input class="manual" id="manual" type="text" readonly aria-label="Einladung">
+    </div>
+
+    <div class="card" id="badCard" hidden>
+      <p id="bad">Dieser Einladungslink ist unvollständig. Bitte lass dir die Einladung noch einmal schicken.</p>
+    </div>
+
+    <footer><a href="/privacy.html">Datenschutz</a> · <a href="/imprint.html">Impressum</a></footer>
+  </div>
+  <script>
+  (function () {
+    // INVITE-HTTPS-01 config: TestFlight public link during the closed test, App Store link after launch.
+    var INSTALL_URL = 'https://testflight.apple.com/join/9mNTu1QY';
+    var TOKEN_RE = /^[A-Za-z0-9_-]{43}$/;
+    var raw = (location.hash || '').replace(/^#/, '');
+    var token = TOKEN_RE.test(raw) ? raw : '';
+    var en = !/^de\b/i.test(navigator.language || 'de');
+    var t = en ? {
+      title: 'You have been invited to Astonima', s1: '1. Install Astonima', install: 'Install the app',
+      s2: '2. Then open the invitation', open: 'Open invitation in Astonima', copy: 'Copy invitation',
+      copyNote: 'If the app does not open: copy the invitation, open Astonima, go to Friends and tap "Paste invitation".',
+      copied: 'Copied.', copyFail: 'Copying is not possible. Please select the text below and copy it yourself.', bad: 'This invitation link is incomplete. Please ask for the invitation again.'
+    } : null;
+    function set(id, txt) { var el = document.getElementById(id); if (el && txt) el.textContent = txt; }
+    if (t) { document.documentElement.lang = 'en'; for (var k in t) set(k, t[k]); document.title = t.title; }
+    var install = document.getElementById('install');
+    if (/^https:\/\//.test(INSTALL_URL)) install.href = INSTALL_URL; else install.removeAttribute('href');
+    if (!token) {
+      document.getElementById('openCard').hidden = true;
+      document.getElementById('badCard').hidden = false;
+      return;
+    }
+    // Custom scheme on purpose: universal links do not fire for same-domain navigation inside Safari.
+    // The custom-scheme link is what the app's "Paste invitation" parser (FRIENDS-UX-02bc) understands; it is also
+    // used for the button because universal links do not fire for same-domain navigation inside Safari.
+    var appLink = 'face-mood://friends?token=' + token;
+    document.getElementById('open').href = appLink;
+    var manual = document.getElementById('manual');
+    manual.value = appLink;
+    manual.addEventListener('focus', function () { manual.select(); });
+    var copied = document.getElementById('copied'), copyFail = document.getElementById('copyFail');
+    function ok() { copyFail.hidden = true; copied.hidden = false; }
+    function fail() { copied.hidden = true; copyFail.hidden = false; manual.focus(); manual.select(); }
+    document.getElementById('copy').addEventListener('click', function () {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(appLink).then(ok, fail);
+        else fail();
+      } catch (e) { fail(); }
+    });
+  })();
+  </script>
+</body>
+</html>
