@@ -26,6 +26,7 @@
     .primary { background:var(--accent); color:#fff; }
     .secondary { background:transparent; color:var(--accent); border:1px solid var(--accent); }
     .note { font-size:.85rem; margin-top:.75rem; }
+    .manual { width:100%; margin-top:.75rem; padding:.6rem; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:.8rem; }
     [hidden] { display:none !important; }
     footer { margin-top:2rem; font-size:.8rem; color:var(--muted); text-align:center; }
     footer a { color:var(--muted); }
@@ -47,6 +48,8 @@
       <button class="btn secondary" id="copy" type="button">Einladung kopieren</button>
       <p class="note" id="copyNote">Falls sich die App nicht öffnet: Einladung kopieren, Astonima öffnen, unter „Freunde“ auf „Einladung einfügen“ tippen.</p>
       <p class="note" id="copied" hidden>Kopiert.</p>
+      <p class="note" id="copyFail" hidden>Kopieren nicht möglich. Bitte den Text unten markieren und selbst kopieren.</p>
+      <input class="manual" id="manual" type="text" readonly aria-label="Einladung">
     </div>
 
     <div class="card" id="badCard" hidden>
@@ -67,7 +70,7 @@
       title: 'You have been invited to Astonima', s1: '1. Install Astonima', install: 'Install the app',
       s2: '2. Then open the invitation', open: 'Open invitation in Astonima', copy: 'Copy invitation',
       copyNote: 'If the app does not open: copy the invitation, open Astonima, go to Friends and tap "Paste invitation".',
-      copied: 'Copied.', bad: 'This invitation link is incomplete. Please ask for the invitation again.'
+      copied: 'Copied.', copyFail: 'Copying is not possible. Please select the text below and copy it yourself.', bad: 'This invitation link is incomplete. Please ask for the invitation again.'
     } : null;
     function set(id, txt) { var el = document.getElementById(id); if (el && txt) el.textContent = txt; }
     if (t) { document.documentElement.lang = 'en'; for (var k in t) set(k, t[k]); document.title = t.title; }
@@ -79,11 +82,21 @@
       return;
     }
     // Custom scheme on purpose: universal links do not fire for same-domain navigation inside Safari.
-    document.getElementById('open').href = 'face-mood://friends?token=' + token;
+    // The custom-scheme link is what the app's "Paste invitation" parser (FRIENDS-UX-02bc) understands; it is also
+    // used for the button because universal links do not fire for same-domain navigation inside Safari.
+    var appLink = 'face-mood://friends?token=' + token;
+    document.getElementById('open').href = appLink;
+    var manual = document.getElementById('manual');
+    manual.value = appLink;
+    manual.addEventListener('focus', function () { manual.select(); });
+    var copied = document.getElementById('copied'), copyFail = document.getElementById('copyFail');
+    function ok() { copyFail.hidden = true; copied.hidden = false; }
+    function fail() { copied.hidden = true; copyFail.hidden = false; manual.focus(); manual.select(); }
     document.getElementById('copy').addEventListener('click', function () {
-      var link = 'https://www.astonima.app/i#' + token;
-      var done = function () { document.getElementById('copied').hidden = false; };
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(link).then(done, function () {});
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(appLink).then(ok, fail);
+        else fail();
+      } catch (e) { fail(); }
     });
   })();
   </script>
